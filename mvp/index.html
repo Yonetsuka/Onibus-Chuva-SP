@@ -1,0 +1,226 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ônibus &amp; Chuva SP · CitizenTech</title>
+<meta name="description" content="Descubra se a sua linha de ônibus costuma ter menos veículos quando chove.">
+<style>
+  :root{
+    --bg:#f6f7f9; --card:#ffffff; --tx:#14181f; --mut:#4a5565; --bd:#d5dae2;
+    --brand:#0b5fd1; --rain:#0a7f8f; --warn:#8a4b00; --warnbg:#fff4e0; --bad:#a3262a; --good:#116b3a;
+  }
+  @media (prefers-color-scheme: dark){
+    :root{--bg:#0f1319; --card:#171d26; --tx:#eef1f6; --mut:#aab4c3; --bd:#2c3644;
+      --brand:#6aa5ff; --rain:#5fd0df; --warn:#ffc978; --warnbg:#2c2111; --bad:#ff8c90; --good:#6fd39a;}
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--tx);font:18px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+  main{max-width:760px;margin:0 auto;padding:16px}
+  h1{font-size:1.55rem;margin:.2rem 0}
+  h2{font-size:1.15rem;margin:0 0 .5rem}
+  p{margin:.3rem 0}
+  .sub{color:var(--mut)}
+  .card{background:var(--card);border:1px solid var(--bd);border-radius:14px;padding:16px;margin:14px 0}
+  label{display:block;font-weight:700;margin-bottom:6px}
+  select{width:100%;font:inherit;padding:12px;border-radius:10px;border:2px solid var(--bd);background:var(--card);color:var(--tx);min-height:48px}
+  :focus-visible{outline:3px solid var(--brand);outline-offset:2px}
+  .banner{background:var(--warnbg);color:var(--warn);border:1px solid var(--warn);border-radius:10px;padding:10px 14px}
+  .veredito{font-size:1.25rem;font-weight:700}
+  .veredito.bad{color:var(--bad)} .veredito.good{color:var(--good)}
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-top:10px}
+  .stat{border:1px solid var(--bd);border-radius:10px;padding:10px}
+  .stat b{display:block;font-size:1.6rem}
+  .stat span{color:var(--mut);font-size:.9rem}
+  .bars{display:flex;align-items:flex-end;gap:3px;height:170px;margin-top:10px;overflow-x:auto;padding-bottom:2px}
+  .bar{flex:1 0 14px;min-width:14px;background:var(--brand);border-radius:4px 4px 0 0;position:relative}
+  .bar.rain{background:repeating-linear-gradient(45deg,var(--rain),var(--rain) 4px,transparent 4px,transparent 7px);border:2px solid var(--rain)}
+  .legend{display:flex;gap:16px;flex-wrap:wrap;font-size:.9rem;color:var(--mut);margin-top:8px}
+  .sw{display:inline-block;width:14px;height:14px;border-radius:3px;vertical-align:-2px;margin-right:6px;background:var(--brand)}
+  .sw.rain{background:repeating-linear-gradient(45deg,var(--rain),var(--rain) 3px,transparent 3px,transparent 5px);border:2px solid var(--rain)}
+  table{width:100%;border-collapse:collapse;font-size:.95rem}
+  th,td{text-align:left;padding:8px;border-bottom:1px solid var(--bd)}
+  details summary{cursor:pointer;font-weight:700;padding:6px 0}
+  footer{color:var(--mut);font-size:.9rem;padding:8px 0 24px}
+  .sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>Ônibus &amp; Chuva SP</h1>
+    <p class="sub">Escolha a sua linha e veja se, quando chove, passam menos ônibus.</p>
+  </header>
+
+  <div id="aviso" role="status"></div>
+
+  <section class="card" aria-labelledby="h-linha">
+    <h2 id="h-linha" class="sr-only">Escolha da linha</h2>
+    <label for="linha">Qual é a sua linha?</label>
+    <select id="linha" aria-describedby="ajuda"></select>
+    <p id="ajuda" class="sub">Os números vêm de coletas reais de posição dos ônibus e da chuva por hora.</p>
+  </section>
+
+  <section class="card" aria-live="polite" aria-labelledby="h-res">
+    <h2 id="h-res">Resultado para a sua linha</h2>
+    <p id="veredito" class="veredito">Carregando…</p>
+    <p id="detalhe" class="sub"></p>
+    <div class="grid" id="stats"></div>
+  </section>
+
+  <section class="card" aria-labelledby="h-graf">
+    <h2 id="h-graf">Ônibus nas ruas, hora a hora</h2>
+    <div class="bars" id="barras" role="img" aria-label="Gráfico de barras com a quantidade de ônibus por hora. Barras listradas indicam horas com chuva. Veja a tabela abaixo para os valores."></div>
+    <div class="legend">
+      <span><i class="sw"></i>Sem chuva</span>
+      <span><i class="sw rain"></i>Com chuva</span>
+    </div>
+    <details>
+      <summary>Ver os valores em tabela</summary>
+      <table>
+        <caption class="sr-only">Ônibus por hora</caption>
+        <thead><tr><th scope="col">Hora</th><th scope="col">Ônibus</th><th scope="col">Chuva (mm)</th><th scope="col">Acessíveis</th></tr></thead>
+        <tbody id="tabela"></tbody>
+      </table>
+    </details>
+  </section>
+
+  <section class="card" aria-labelledby="h-geral">
+    <h2 id="h-geral">Visão geral da cidade</h2>
+    <p class="sub">Média de ônibus por linha e hora, conforme a intensidade da chuva.</p>
+    <table>
+      <thead><tr><th scope="col">Chuva</th><th scope="col">Média de ônibus</th><th scope="col">Variação</th></tr></thead>
+      <tbody id="geral"></tbody>
+    </table>
+  </section>
+
+  <footer>
+    <p><b>Fontes:</b> SPTrans Olho Vivo e Open-Meteo.</p>
+    <p><b>Privacidade (LGPD):</b> não coletamos dados pessoais. Mostramos só dados de frota e clima, agregados por linha e hora.</p>
+    <p><b>ODS:</b> 11 (cidades e comunidades sustentáveis), 10 (redução das desigualdades, ao informar a acessibilidade), 13 (ação contra a mudança do clima), 9 (inovação e infraestrutura).</p>
+    <p id="gerado"></p>
+  </footer>
+</main>
+
+<script>
+"use strict";
+const CHAVE_CACHE = "ouro-cache-v1";
+const $ = (id) => document.getElementById(id);
+const fmt = (n, d = 1) => Number(n).toLocaleString("pt-BR", { maximumFractionDigits: d, minimumFractionDigits: 0 });
+const media = (v) => v.reduce((a, b) => a + b, 0) / v.length;
+let DADOS = null;
+
+function limpar(el) { while (el.firstChild) el.removeChild(el.firstChild); }
+function celula(tr, txt, th) {
+  const c = document.createElement(th ? "th" : "td");
+  if (th) c.scope = "row";
+  c.textContent = txt; tr.appendChild(c);
+}
+
+async function carregar() {
+  // 1) rede  2) cache local (conexão ruim)  3) mensagem clara
+  try {
+    const r = await fetch("data/ouro.json", { cache: "no-cache" });
+    if (!r.ok) throw new Error("HTTP " + r.status);
+    const d = await r.json();
+    try { localStorage.setItem(CHAVE_CACHE, JSON.stringify(d)); } catch (_) {}
+    return { dados: d, doCache: false };
+  } catch (e) {
+    try {
+      const c = localStorage.getItem(CHAVE_CACHE);
+      if (c) return { dados: JSON.parse(c), doCache: true };
+    } catch (_) {}
+    throw e;
+  }
+}
+
+function avisar(texto) {
+  const a = $("aviso"); limpar(a);
+  if (!texto) return;
+  const d = document.createElement("div"); d.className = "banner"; d.textContent = texto; a.appendChild(d);
+}
+
+function avaliar(linha) {
+  const chuva = linha.horas.filter((h) => h.precip_mm > 0.1).map((h) => h.qtd_onibus);
+  const seco = linha.horas.filter((h) => h.precip_mm <= 0.1).map((h) => h.qtd_onibus);
+  if (chuva.length < 2 || seco.length < 2) {
+    return { classe: "", titulo: "Ainda não há horas de chuva suficientes para comparar.",
+      detalhe: "Assim que chover mais, o resultado aparece aqui.", mc: null, ms: seco.length ? media(seco) : null, n: [chuva.length, seco.length] };
+  }
+  const mc = media(chuva), ms = media(seco), v = (mc / ms - 1) * 100;
+  let titulo, classe = "";
+  if (v <= -5) { titulo = `Quando chove, passam cerca de ${fmt(Math.abs(v), 0)}% menos ônibus nessa linha.`; classe = "bad"; }
+  else if (v >= 5) { titulo = `Quando chove, passam cerca de ${fmt(v, 0)}% mais ônibus nessa linha.`; classe = "good"; }
+  else { titulo = "A chuva não muda de forma relevante o número de ônibus dessa linha."; }
+  return { classe, titulo, mc, ms, n: [chuva.length, seco.length],
+    detalhe: `Base: ${chuva.length} horas com chuva e ${seco.length} horas sem chuva. Poucas horas observadas deixam o resultado menos confiável.` };
+}
+
+function mostrar(linha) {
+  const r = avaliar(linha);
+  const v = $("veredito"); v.textContent = r.titulo; v.className = "veredito " + r.classe;
+  $("detalhe").textContent = r.detalhe;
+
+  const stats = $("stats"); limpar(stats);
+  const add = (valor, rotulo) => {
+    const d = document.createElement("div"); d.className = "stat";
+    const b = document.createElement("b"); b.textContent = valor;
+    const s = document.createElement("span"); s.textContent = rotulo;
+    d.append(b, s); stats.appendChild(d);
+  };
+  add(r.ms == null ? "–" : fmt(r.ms), "ônibus por hora, sem chuva");
+  add(r.mc == null ? "–" : fmt(r.mc), "ônibus por hora, com chuva");
+  add(linha.horas.length ? fmt(media(linha.horas.map((h) => h.pct_acessivel)), 0) + "%" : "–", "ônibus acessíveis");
+  add(`${linha.acessiveis_agora} de ${linha.ativos_agora}`, "acessíveis agora");
+
+  const ultimas = linha.horas.slice(-36);
+  const max = Math.max(1, ...ultimas.map((h) => h.qtd_onibus));
+  const barras = $("barras"); limpar(barras);
+  const tb = $("tabela"); limpar(tb);
+  ultimas.forEach((h) => {
+    const b = document.createElement("div");
+    b.className = "bar" + (h.precip_mm > 0.1 ? " rain" : "");
+    b.style.height = Math.max(4, (h.qtd_onibus / max) * 100) + "%";
+    b.title = `${h.hora.replace("T", " ")} · ${h.qtd_onibus} ônibus · ${fmt(h.precip_mm)} mm`;
+    barras.appendChild(b);
+    const tr = document.createElement("tr");
+    celula(tr, h.hora.replace("T", " "), true); celula(tr, h.qtd_onibus);
+    celula(tr, fmt(h.precip_mm)); celula(tr, fmt(h.pct_acessivel, 0) + "%");
+    tb.appendChild(tr);
+  });
+}
+
+function geral(resumo) {
+  const g = $("geral"); limpar(g);
+  resumo.forEach((x) => {
+    const tr = document.createElement("tr");
+    celula(tr, x.faixa, true); celula(tr, fmt(x.media_onibus));
+    celula(tr, x.variacao_pct == null ? "–" : (x.variacao_pct > 0 ? "+" : "") + fmt(x.variacao_pct) + "%");
+    g.appendChild(tr);
+  });
+}
+
+(async function iniciar() {
+  try {
+    const { dados, doCache } = await carregar();
+    DADOS = dados;
+    const sel = $("linha");
+    dados.linhas.forEach((l) => {
+      const o = document.createElement("option"); o.value = l.id;
+      o.textContent = `${l.letreiro} · ${l.origem} → ${l.destino}`; sel.appendChild(o);
+    });
+    sel.addEventListener("change", () => mostrar(dados.linhas.find((l) => String(l.id) === sel.value)));
+    mostrar(dados.linhas[0]); geral(dados.resumo_chuva);
+    $("gerado").textContent = "Dados gerados em " + dados.gerado_em + ". Fonte: " + dados.fonte + ".";
+    const msgs = [];
+    if (dados.simulado) msgs.push("Atenção: estes são dados de EXEMPLO (simulados), não reais.");
+    if (doCache) msgs.push("Sem conexão: mostrando os últimos dados salvos neste aparelho.");
+    avisar(msgs.join(" "));
+  } catch (e) {
+    $("veredito").textContent = "Não foi possível carregar os dados agora. Tente de novo em instantes.";
+    $("detalhe").textContent = "";
+  }
+})();
+</script>
+</body>
+</html>

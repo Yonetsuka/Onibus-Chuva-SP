@@ -6,17 +6,11 @@
 
 | Nome completo | RM |
 |---|---|
-| Cássio Eid Kobayashi Yonetsuka | RM99678 |
-| Filipe Prado Menezes | RM98765 |
-| Gabriel Gomes Catanzaro | RM93445 |
-| Henrique Canali Cuzato | RM551326 |
-| Lucas Gomes Alcântara | RM98766 |
-
-## Propósito
-
-Quem depende de ônibus em São Paulo não sabe, antes de sair de casa, se a chuva vai reduzir a quantidade de ônibus da sua linha. Essa pessoa descobre esperando no ponto, o que pesa mais para idosos e pessoas com deficiência.
-
-O **Ônibus & Chuva SP** transforma dados abertos em uma resposta simples para o cidadão: "na sua linha, quando chove, passam cerca de X% menos ônibus". Também mostra quantos ônibus acessíveis estão rodando agora.
+| _preencher_ | _preencher_ |
+| _preencher_ | _preencher_ |
+| _preencher_ | _preencher_ |
+| _preencher_ | _preencher_ |
+| _preencher_ | _preencher_ |
 
 ## Ficha Técnica do MVP
 
@@ -28,9 +22,8 @@ O **Ônibus & Chuva SP** transforma dados abertos em uma resposta simples para o
 | Proposta de valor | Mostrar, com dados reais, como a chuva afeta a oferta de cada linha e quantos ônibus acessíveis estão rodando |
 | Arquitetura: componentes | Airflow → pasta `chegada/` → Volume Databricks → Bronze → Prata → Ouro → JSON → MVP web |
 | Fontes de dados | SPTrans Olho Vivo (API, posição dos ônibus) e Open-Meteo (API, chuva e temperatura por hora) |
-| Modelos de IA utilizados | PREENCHER (integrar com as outras disciplinas) |
-| URL do MVP | PREENCHER |
-| URL do repositório | PREENCHER |
+| Modelos de IA utilizados | _preencher com as outras disciplinas (IA generativa, visão)_ |
+| URL do MVP e repositório | _preencher_ |
 | Indicadores de impacto | Variação % da oferta de ônibus com chuva · % de ônibus acessíveis por período · linhas mais sensíveis à chuva |
 | ODS conectados | 11 (cidades sustentáveis), 10 (redução das desigualdades), 13 (ação climática), 9 (inovação e infraestrutura) |
 
@@ -70,9 +63,9 @@ posicao_recente   (apoio do MVP, com hash e generalização)
 ```
 dags/            DAG do Airflow (gs_coleta.py)
 databricks/      notebooks: 00 setup, 01 Bronze, 02 Prata, 03 Ouro, 04 consultas SQL, 05 exportação para o MVP
-amostras/        um pouco de cada fonte coletada
+amostras/        um pouco de cada fonte (substituir pelos arquivos reais da 1ª coleta)
 mvp/             tela do cidadão (HTML + data/ouro.json)
-scripts/         gerador de dados simulados, usado só para testes antes da coleta real
+scripts/         gerador de dados simulados, só para testar antes da coleta real
 README.md        este arquivo
 ```
 
@@ -91,21 +84,21 @@ README.md        este arquivo
 
 **3. MVP**
 - Local: `cd mvp && python -m http.server 8000` e abra `http://localhost:8000`.
-- Público: GitHub Pages apontando para a pasta do MVP.
+- Público: GitHub Pages apontando para a pasta `mvp/` (ou `/docs`).
 
 ## LGPD
 
 - **Não há dados pessoais**: os dados são de frota e clima. Nenhuma localização, nome ou identificador de pessoa é coletado.
 - **Minimização na Ouro:** o prefixo do veículo vira hash SHA-256 truncado, as coordenadas são generalizadas (~100 m) e o fato é agregado por linha e hora.
-- **Segredos:** o token da SPTrans fica apenas em Airflow Variables. O repositório não contém chaves nem senhas.
+- **Segredos:** token da SPTrans apenas em Airflow Variables. O repositório não contém chaves nem senhas.
 
 ## Qualidade e idempotência
 
-- **Bronze:** Auto Loader com checkpoint. O 2º lote lê só os arquivos novos, e rodar de novo não duplica.
+- **Bronze:** Auto Loader com checkpoint; o 2º lote lê só os arquivos novos e rodar de novo não duplica.
 - **Prata:** `MERGE` pela chave (`prefixo + ts_utc` e `cidade + data_hora`) e 3 regras de qualidade por tabela, com o total barrado gravado em `prata_qualidade`.
 
 ## Limitações conhecidas
 
 - A Olho Vivo mostra apenas o "agora", sem histórico: a série cresce com as coletas. Poucos dias de dados deixam o resultado menos confiável, e o MVP avisa isso.
 - Se não chover no período de coleta, as consultas de impacto mostram apenas horas "sem chuva".
-- Ônibus "na rua" é uma medida de oferta observada, não de atraso. O projeto mostra correlação entre chuva e oferta, não prova que a chuva é a causa.
+- Ônibus "na rua" é uma medida de oferta observada, não de atraso: o MVP não afirma que o ônibus atrasou.
