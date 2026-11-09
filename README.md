@@ -72,6 +72,7 @@ README.md        este arquivo
 ## Como reproduzir
 
 **1. Airflow 3** (Docker Compose oficial da documentação do Airflow 3)
+- Use o docker-compose.yaml da raiz do repositório. Crie as pastas logs, config, plugins e chegada, e um arquivo .env com AIRFLOW_UID=50000. Rode docker compose     up airflow-init e depois docker compose up -d
 - Monte `./dags` em `/opt/airflow/dags` e `./chegada` em `/opt/airflow/chegada`.
 - Em **Admin > Variables**, crie `SPTRANS_TOKEN` com o seu token da API Olho Vivo. Opcionais: `GS_CHEGADA_DIR` e `ALERTA_WEBHOOK`.
 - Ative o DAG `gs_coleta`. Ele coleta às 07h, 12h e 18h (fuso de São Paulo). Deixe rodar em pelo menos 2 dias diferentes.
