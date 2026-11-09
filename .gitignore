@@ -1,0 +1,14 @@
+# arquivos brutos coletados (grandes); só amostras/ vai para o GitHub
+chegada/
+logs/
+config/
+plugins/
+cookies.txt
+# segredos
+.env
+*.tfvars
+airflow.cfg
+# python
+__pycache__/
+*.pyc
+.venv/
