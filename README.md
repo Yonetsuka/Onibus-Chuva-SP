@@ -6,11 +6,11 @@
 
 | Nome completo | RM |
 |---|---|
-| _preencher_ | _preencher_ |
-| _preencher_ | _preencher_ |
-| _preencher_ | _preencher_ |
-| _preencher_ | _preencher_ |
-| _preencher_ | _preencher_ |
+| Cássio Eid Kobayashi Yonetsuka | RM99678 |
+| Filipe Prado Menezes | RM98765 |
+| Gabriel Gomes Catanzaro | RM93445 |
+| Henrique Canali Cuzato | RM551326 |
+| Lucas Gomes Alcântara | RM98766 |
 
 ## Ficha Técnica do MVP
 
